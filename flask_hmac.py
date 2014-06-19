@@ -10,7 +10,10 @@ import hashlib
 import hmac
 from functools import wraps
 
+from flask import app
+from flask import request
 from flask import jsonify
+
 
 class Hmac(object):
     ''' This module provides three functions to authenticate calls to a Flask route.
