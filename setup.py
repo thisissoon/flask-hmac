@@ -9,7 +9,7 @@ with open('README.rst') as file:
 
 setup(
     name='Flask-HMAC',
-    version='0.1.1',
+    version='0.1.3',
     url='http://github.com/jamonation/flask-hmac',
     license='WTFPL',
     author='Jamon Camisso',
