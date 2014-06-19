@@ -62,7 +62,7 @@ class Hmac(object):
 
     def init_self(self, app):
         self.hmac_key = app.config['HMAC_KEY']
-        self.hmac_disarm = app.config['HMAC_DISARM']
+        self.hmac_disarm = app.config.get('HMAC_DISARM', False)
 
 
     def check_hmac(self, route_view_function):
