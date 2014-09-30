@@ -31,7 +31,7 @@ return a 403 response.
 
 3. ``render_hmac()`` function, which, you guessed it, generates an hmac.
 
-To use this module, instantiate it like this:
+To use this module, instantiate it in the following manner:
 
 .. code:: python
 
