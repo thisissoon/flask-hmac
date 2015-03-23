@@ -25,9 +25,7 @@ The three provided methods are:
 
 1. ``check_wrapper()`` decorator function, which wraps a route with a call to:
 
-2. ``compare_hmacs()`` function, which compares a client supplied token with a
-server generated token. If the two match, return the decorated function. If not,
-return a 403 response.
+2. ``compare_hmacs()`` function, which compares a client supplied token with a server generated token. If the two match, return the decorated function. If not, return a 403 response.
 
 3. ``render_hmac()`` function, which, you guessed it, generates an hmac.
 
