@@ -32,7 +32,7 @@ class Hmac(object):
         The three provided methods are:
         1. check_wrapper() decorator function, which wraps a route with a call to:
         2. check_hmac() function, which compares a client supplied token with a server
-        generated token. If the two match, return the decorated function. If not, 
+        generated token. If the two match, return the decorated function. If not,
         return a 403 response.
         3. render_hmac() function, which, you guessed it, generates an hmac.
 
@@ -46,7 +46,7 @@ class Hmac(object):
 
         @app.route('/path/to/api/endpoint', METHODS = ['PUT', 'POST'])
         @Hmac.check_hmac
-        
+
         Lastly, you can temporarily disable the check_hmac validation with a config value.
         Make a variable HMAC_DISARM = True in your app.config. This setting is useful for
         testing as it allows you to leave all decorator calls in place for routes/blueprints.
@@ -61,6 +61,7 @@ class Hmac(object):
 
 
     def init_self(self, app):
+        self.logger = app.logger
         self.hmac_key = app.config['HMAC_KEY']
         self.hmac_disarm = app.config.get('HMAC_DISARM', False)
 
@@ -110,8 +111,8 @@ class Hmac(object):
 
     def compare_hmacs(self, secret, data, hmac_token_client):
         hmac_token_server = self.render_hmac(secret, data)
-        app.logger.debug('hmac client token: %s' % hmac_token_client)
-        app.logger.debug('hmac server token: %s' % hmac_token_server)
+        self.logger.debug('hmac client token: %s' % hmac_token_client)
+        self.logger.debug('hmac server token: %s' % hmac_token_server)
         if hmac_token_client == hmac_token_server:
             return True
         else:
