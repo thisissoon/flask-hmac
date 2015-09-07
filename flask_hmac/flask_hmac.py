@@ -16,43 +16,6 @@ from flask import jsonify, request
 
 
 class Hmac(object):
-    ''' This module provides three functions to authenticate calls to a Flask route.
-        The intended use case is for use with REST APIs. This module is not intended
-        to do any kind of login or session management, it is simply designed to check
-        that a client is entitled to access a particular route in a Flask application,
-        based on the fact that it must possess a copy of the shared/secret key.
-
-        To use this module, add an 'HMAC_KEY' to your application's config object. For
-        example: HMAC_KEY = 2a21c5b3bff0299c0161470468f355e5b4afcf17a5f593ab68394e
-
-        Next, in your client code, send a base64 url safe encoded header of the HMAC
-        like this: "HMAC: UKW-EaC9diBPuRTgwaUprw4pf4h1nTJyClCT48dbhQo"
-        Ensure that any trailing = characters are stripped.
-
-        The three provided methods are:
-        1. check_wrapper() decorator function, which wraps a route with a call to:
-        2. check_hmac() function, which compares a client supplied token with a server
-        generated token. If the two match, return the decorated function. If not,
-        return a 403 response.
-        3. render_hmac() function, which, you guessed it, generates an hmac.
-
-        To use this module, instantiate it like this:
-
-        import flask_hmac
-        app = Flask(__name__)
-        Hmac = flask_hmac.Hmac(app)
-
-        Now you can decorate a route with the @Hmac.check decorator like so:
-
-        @app.route('/path/to/api/endpoint', METHODS = ['PUT', 'POST'])
-        @Hmac.check_hmac
-
-        Lastly, you can temporarily disable the check_hmac validation with a config value.
-        Make a variable HMAC_DISARM = True in your app.config. This setting is useful for
-        testing as it allows you to leave all decorator calls in place for routes/blueprints.
-
-        TODO: allow passing custom status messages and codes on __init__
-    '''
 
     def __init__(self, app=None):
         if app is not None:

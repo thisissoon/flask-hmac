@@ -2,7 +2,6 @@
 import unittest
 
 # Third Party Libs
-import httplib
 from flask import Flask
 
 # First Party Libs
@@ -22,8 +21,8 @@ def create_app():
     def no_auth_view():
         return "no_auth_view"
 
-    @hmac.auth
     @app.route("/hmac_auth_view")
+    @hmac.auth
     def hmac_auth_view():
         return "hmac_auth_view"
 
@@ -36,6 +35,10 @@ class TestHmacSignature(unittest.TestCase):
         app = create_app()
         self.app = app.test_client()
 
-    def test_no_auth(self):
+    def test_no_auth_view_should_be_ok(self):
         response = self.app.get('/no_auth_view')
-        assert httplib.OK == response.status_code
+        assert 200 == response.status_code
+
+    def test_auth_without_signature_should_return_403(self):
+        response = self.app.get('/hmac_auth_view')
+        assert 403 == response.status_code

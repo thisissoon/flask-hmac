@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 """
-Flask-HAL
+Flask-HMAC
 ---------
 
 Provides easy integration of the  `HAL <https://tools.ietf.org/html/draft-kelly-json-hal-07>`_
@@ -24,8 +24,8 @@ version = open('./VERSION.txt').read().strip()
 
 
 setup(
-    name='Flask-HAL',
-    url='https://github.com/thisissoon/Flask-HAL',
+    name='Flask-HMAC',
+    url='https://github.com/thisissoon/Flask-HMAC',
     version=version,
     author='SOON_',
     author_email='dorks@thisissoon.com',
