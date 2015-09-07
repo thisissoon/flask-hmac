@@ -13,16 +13,24 @@ from functools import wraps
 
 # Third Party Libs
 from flask import jsonify, request
+import six
+
+
+def encode_string(value):
+    return value.encode('utf-8') if isinstance(value, six.text_type) else value
 
 
 class Hmac(object):
 
-    def __init__(self, app=None):
-        if app is not None:
-            self.init_app(app)
+    def __init__(self, header=None, digestmod=None):
+        self.header = header or 'Signature'
+        self.digestmod = digestmod or hashlib.sha256
+
+    def get_signature(self, request):
+        return request.headers[self.header]
 
     def init_app(self, app):
-        self.hmac_key = app.config['HMAC_KEY']
+        self.hmac_key = six.b(app.config['HMAC_KEY'])
         self.hmac_disarm = app.config.get('HMAC_DISARM', False)
 
     def auth(self, route_view_function):
@@ -32,14 +40,14 @@ class Hmac(object):
                 return route_view_function(*args, **kwargs)
             else:
                 try:
-                    hmac_token = request.headers['HMAC']
+                    hmac_token = self.get_signature(request)
                 except:
                     message = {'status': '403', 'message': 'not authorized'}
                     response = jsonify(message)
                     response.status_code = 403
                     return response
 
-                if self.compare_hmacs(self.hmac_key, request.path, hmac_token):
+                if self.compare_hmacs(request.data, hmac_token):
                     # The magic is here. If the hmac comparison passes, return the
                     # decorated function and proceed as expected.
                     return route_view_function(*args, **kwargs)
@@ -52,20 +60,14 @@ class Hmac(object):
                     return response
         return decorated_view_function
 
-    def hmac_factory(self, secret, data, digestmod=None):
-        if digestmod is None:
-            digestmod = hashlib.sha256
-        try:
-            hmac_token = hmac.new(secret, data, digestmod=digestmod)
-            return hmac_token
-        except TypeError as err:
-            raise err
+    def _hmac_factory(self, data, digestmod=None):
+        return hmac.new(self.hmac_key, data, digestmod=self.digestmod)
 
-    def make_hmac(self, secret, data):
-        hmac_token_server = self.hmac_factory(secret, data).digest()
-        hmac_token_server = base64.urlsafe_b64encode(hmac_token_server).replace('=', '')
+    def make_hmac(self, data=''):
+        hmac_token_server = self._hmac_factory(encode_string(data)).digest()
+        hmac_token_server = base64.urlsafe_b64encode(hmac_token_server)
         return hmac_token_server
 
-    def compare_hmacs(self, secret, data, hmac_token_client):
-        hmac_token_server = self.make_hmac(secret, data)
-        return hmac_token_client == hmac_token_server
+    def compare_hmacs(self, data, hmac_token_client):
+        hmac_token_server = self.make_hmac(data)
+        return six.b(hmac_token_client) == hmac_token_server

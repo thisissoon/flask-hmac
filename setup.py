@@ -37,6 +37,7 @@ setup(
     ],
     install_requires=[
         'flask',
+        'six>=1.9.0',
     ],
     classifiers=[
         'Framework :: Flask',
