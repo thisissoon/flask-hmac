@@ -1,1 +1,2 @@
-include LICENSE README.rst
+include setup.py README.rst MANIFEST.in CHANGELOG.rst CONTRIBUTORS.rst VERSION.txt
+global-exclude *~

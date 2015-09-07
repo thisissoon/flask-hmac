@@ -5,14 +5,14 @@
     Use HMAC tokens and a decorator to authenticate access to routes
 '''
 
+# Standard Libs
 import base64
 import hashlib
 import hmac
 from functools import wraps
 
-from flask import app
-from flask import request
-from flask import jsonify
+# Third Party Libs
+from flask import jsonify, request
 
 
 class Hmac(object):
@@ -54,47 +54,43 @@ class Hmac(object):
         TODO: allow passing custom status messages and codes on __init__
     '''
 
-
     def __init__(self, app=None):
         if app is not None:
-            self.init_self(app)
+            self.init_app(app)
 
-
-    def init_self(self, app):
-        self.logger = app.logger
+    def init_app(self, app):
         self.hmac_key = app.config['HMAC_KEY']
         self.hmac_disarm = app.config.get('HMAC_DISARM', False)
 
-
-    def check_hmac(self, route_view_function):
+    def auth(self, route_view_function):
         @wraps(route_view_function)
         def decorated_view_function(*args, **kwargs):
-            if self.hmac_disarm == True:
+            if self.hmac_disarm:
                 return route_view_function(*args, **kwargs)
             else:
                 try:
                     hmac_token = request.headers['HMAC']
                 except:
-                    message = {'status': '403', 'message':'not authorized'}
+                    message = {'status': '403', 'message': 'not authorized'}
                     response = jsonify(message)
                     response.status_code = 403
                     return response
-                if self.compare_hmacs(self.hmac_key, request.path, hmac_token) == True:
+
+                if self.compare_hmacs(self.hmac_key, request.path, hmac_token):
                     # The magic is here. If the hmac comparison passes, return the
                     # decorated function and proceed as expected.
                     return route_view_function(*args, **kwargs)
                 else:
                     # Otherwise spit out a 403 response and leave it to the client
                     # to figure out why their request failed.
-                    message = {'status': '403', 'message':'not authorized'}
+                    message = {'status': '403', 'message': 'not authorized'}
                     response = jsonify(message)
                     response.status_code = 403
                     return response
         return decorated_view_function
 
-
-    def make_hmac(self, secret, data, digestmod=None):
-        if digestmod == None:
+    def hmac_factory(self, secret, data, digestmod=None):
+        if digestmod is None:
             digestmod = hashlib.sha256
         try:
             hmac_token = hmac.new(secret, data, digestmod=digestmod)
@@ -102,18 +98,11 @@ class Hmac(object):
         except TypeError as err:
             raise err
 
-
-    def render_hmac(self, secret, data):
-        hmac_token_server = self.make_hmac(secret, data).digest()
+    def make_hmac(self, secret, data):
+        hmac_token_server = self.hmac_factory(secret, data).digest()
         hmac_token_server = base64.urlsafe_b64encode(hmac_token_server).replace('=', '')
         return hmac_token_server
 
-
     def compare_hmacs(self, secret, data, hmac_token_client):
-        hmac_token_server = self.render_hmac(secret, data)
-        self.logger.debug('hmac client token: %s' % hmac_token_client)
-        self.logger.debug('hmac server token: %s' % hmac_token_server)
-        if hmac_token_client == hmac_token_server:
-            return True
-        else:
-            return False
+        hmac_token_server = self.make_hmac(secret, data)
+        return hmac_token_client == hmac_token_server
