@@ -12,8 +12,8 @@ import hmac
 from functools import wraps
 
 # Third Party Libs
-from flask import jsonify, request
 import six
+from flask import jsonify, request
 
 
 def encode_string(value):

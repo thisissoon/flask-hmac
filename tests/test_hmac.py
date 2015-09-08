@@ -1,4 +1,5 @@
 # Standard Libs
+import json
 import unittest
 
 # Third Party Libs
@@ -87,3 +88,25 @@ class TestHmacSignatureViews(unittest.TestCase):
         sig = hmac.make_hmac()
         response = self.app.get('/hmac_auth_view', headers={hmac.header: sig})
         assert 200 == response.status_code
+
+    def test_signature_with_request_data(self):
+        data = json.dumps({'foo': 'boo'})
+
+        sig = hmac.make_hmac(data)
+        response = self.app.get(
+            '/hmac_auth_view',
+            data=data,
+            headers={hmac.header: sig}
+        )
+        assert 200 == response.status_code
+
+    def test_signature_with_changed_request_data(self):
+        data = json.dumps({'foo': 'boo'})
+
+        sig = hmac.make_hmac(data)
+        response = self.app.get(
+            '/hmac_auth_view',
+            data=json.dumps({'foo': 'bla'}),
+            headers={hmac.header: sig}
+        )
+        assert 403 == response.status_code
