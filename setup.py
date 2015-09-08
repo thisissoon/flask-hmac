@@ -5,8 +5,7 @@
 Flask-HMAC
 ---------
 
-Provides easy integration of the  `HAL <https://tools.ietf.org/html/draft-kelly-json-hal-07>`_
-specification for your ``REST`` Flask Applications.
+Provides easy integration of the HMAC signature for Flask routes
 """
 
 # Third Party Libs
@@ -24,7 +23,7 @@ version = open('./VERSION.txt').read().strip()
 
 
 setup(
-    name='Flask-HMAC',
+    name='flaskhmac',
     url='https://github.com/thisissoon/Flask-HMAC',
     version=version,
     author='SOON_',

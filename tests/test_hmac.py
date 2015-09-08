@@ -20,14 +20,14 @@ def create_app(disable_hmac=None):
         app.config['HMAC_DISARM'] = disable_hmac
     hmac.init_app(app)
 
-    @app.route("/no_auth_view")
+    @app.route('/no_auth_view')
     def no_auth_view():
-        return "no_auth_view"
+        return 'no_auth_view'
 
-    @app.route("/hmac_auth_view")
+    @app.route('/hmac_auth_view', methods=['GET', 'POST'])
     @hmac.auth
     def hmac_auth_view():
-        return "hmac_auth_view"
+        return 'hmac_auth_view'
 
     return app
 
@@ -93,7 +93,7 @@ class TestHmacSignatureViews(unittest.TestCase):
         data = json.dumps({'foo': 'boo'})
 
         sig = hmac.make_hmac(data)
-        response = self.app.get(
+        response = self.app.post(
             '/hmac_auth_view',
             data=data,
             headers={hmac.header: sig}
@@ -104,7 +104,7 @@ class TestHmacSignatureViews(unittest.TestCase):
         data = json.dumps({'foo': 'boo'})
 
         sig = hmac.make_hmac(data)
-        response = self.app.get(
+        response = self.app.post(
             '/hmac_auth_view',
             data=json.dumps({'foo': 'bla'}),
             headers={hmac.header: sig}
