@@ -1,10 +1,12 @@
 Flask-HMAC
 ==========
 
-This module provides three functions to authenticate calls to a Flask route. The
-intended use case is for use with REST APIs. It's simply designed to check that a
-client is entitled to access a particular route in a Flask application, based on
-the fact that it must possess a copy of the secret key.
+|circle| |downloads| |version| |license|
+
+This module provides an authentication to Flask routes. The intended use case
+is for use with REST APIs. It's simply designed to check that a client is
+entitled to access a particular route in a Flask application, based on the fact
+that it must possess a copy of the secret key.
 
 
 Usage
@@ -57,3 +59,16 @@ Request payload has to be used as a data for HMAC generation.
         data=data,
         headers={hmac.header: sig}
     )
+
+
+.. |circle| image:: https://img.shields.io/circleci/project/thisissoon/flask-hmac.svg
+    :target: https://circleci.com/gh/thisissoon/flask-hmac
+
+.. |downloads| image:: http://img.shields.io/pypi/dm/flaskhmac.svg
+    :target: https://pypi.python.org/pypi/flaskhmac
+
+.. |version| image:: http://img.shields.io/pypi/v/flaskhmac.svg
+    :target: https://pypi.python.org/pypi/flaskhmac
+
+.. |license| image:: http://img.shields.io/pypi/l/flaskhmac.svg
+    :target: https://pypi.python.org/pypi/flaskhmac
