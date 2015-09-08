@@ -33,31 +33,21 @@ class Hmac(object):
         self.hmac_key = six.b(app.config['HMAC_KEY'])
         self.hmac_disarm = app.config.get('HMAC_DISARM', False)
 
-    def auth(self, route_view_function):
-        @wraps(route_view_function)
+    def auth(self, route):
+        @wraps(route)
         def decorated_view_function(*args, **kwargs):
             if self.hmac_disarm:
-                return route_view_function(*args, **kwargs)
-            else:
-                try:
-                    hmac_token = self.get_signature(request)
-                except:
-                    message = {'status': '403', 'message': 'not authorized'}
-                    response = jsonify(message)
-                    response.status_code = 403
-                    return response
+                return route(*args, **kwargs)
 
-                if self.compare_hmacs(request.data, hmac_token):
-                    # The magic is here. If the hmac comparison passes, return the
-                    # decorated function and proceed as expected.
-                    return route_view_function(*args, **kwargs)
-                else:
-                    # Otherwise spit out a 403 response and leave it to the client
-                    # to figure out why their request failed.
-                    message = {'status': '403', 'message': 'not authorized'}
-                    response = jsonify(message)
-                    response.status_code = 403
-                    return response
+            try:
+                hmac_token = self.get_signature(request)
+                self.compare_hmacs(request.data, hmac_token)
+                return route(*args, **kwargs)
+            except (ValueError, KeyError):
+                message = {'status': '403', 'message': 'not authorized'}
+                response = jsonify(message)
+                response.status_code = 403
+                return response
         return decorated_view_function
 
     def _hmac_factory(self, data, digestmod=None):
@@ -70,4 +60,8 @@ class Hmac(object):
 
     def compare_hmacs(self, data, hmac_token_client):
         hmac_token_server = self.make_hmac(data)
-        return six.b(hmac_token_client) == hmac_token_server
+        if six.b(hmac_token_client) != hmac_token_server:
+            raise ValueError('Signatures are different: {0} {1}'.format(
+                six.b(hmac_token_client), hmac_token_server
+            ))
+        return True
