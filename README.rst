@@ -76,7 +76,7 @@ You can define custom errors overwriting ``abort`` method:
             response.status_code = 403
             return response
 
-For sign all your views you can use ``Flask``'s ``before_request``:
+For HMAC auth of all views you can use ``Flask``'s ``before_request``:
 
 .. sourcecode:: python
 
