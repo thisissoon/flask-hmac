@@ -31,9 +31,11 @@ Server
     def hmac_auth_view():
         return "hmac_auth_view"
 
+Client
+~~~~~~
 
-Call without payload
-~~~~~~~~~~~~~~~~~~~~
+**Call without payload**
+
 
 .. sourcecode:: python
 
@@ -44,8 +46,7 @@ Call without payload
     )
 
 
-Call with payload
-~~~~~~~~~~~~~~~~~
+**Call with payload**
 
 Request payload has to be used as a data for HMAC generation.
 
@@ -59,6 +60,32 @@ Request payload has to be used as a data for HMAC generation.
         data=data,
         headers={hmac.header: sig}
     )
+
+
+----
+
+You can define custom errors overwriting ``abort`` method:
+
+.. sourcecode:: python
+
+    class MyHmac(Hmac):
+
+        def abort(self):
+            message = {'status': '403', 'message': 'not authorized'}
+            response = jsonify(message)
+            response.status_code = 403
+            return response
+
+For sign all your views you can use ``Flask``'s ``before_request``:
+
+.. sourcecode:: python
+
+    @app.before_request
+    def before_request():
+        try:
+            hmac.validate_signature(request)
+        except HmacException:
+            return abort(400)
 
 
 .. |circle| image:: https://img.shields.io/circleci/project/thisissoon/flask-hmac.svg
