@@ -13,7 +13,10 @@ from functools import wraps
 
 # Third Party Libs
 import six
-from flask import jsonify, request
+from flask import abort, request
+
+# First Party Libs
+from .exceptions import InvalidSignature, SecretKeyIsNotSet
 
 
 def encode_string(value):
@@ -22,12 +25,17 @@ def encode_string(value):
 
 class Hmac(object):
 
-    def __init__(self, header=None, digestmod=None):
+    def __init__(self, app=None, header=None, digestmod=None):
         self.header = header or 'Signature'
         self.digestmod = digestmod or hashlib.sha256
+        if app:
+            self.init_app(app)
 
     def get_signature(self, request):
-        return request.headers[self.header]
+        try:
+            return six.b(request.headers[self.header])
+        except KeyError:
+            raise SecretKeyIsNotSet()
 
     def init_app(self, app):
         self.hmac_key = six.b(app.config['HMAC_KEY'])
@@ -36,19 +44,15 @@ class Hmac(object):
     def auth(self, route):
         @wraps(route)
         def decorated_view_function(*args, **kwargs):
-            if self.hmac_disarm:
-                return route(*args, **kwargs)
-
             try:
-                hmac_token = self.get_signature(request)
-                self.compare_hmacs(request.data, hmac_token)
-                return route(*args, **kwargs)
-            except (ValueError, KeyError):
-                message = {'status': '403', 'message': 'not authorized'}
-                response = jsonify(message)
-                response.status_code = 403
-                return response
+                self.validate_signature(request)
+            except (SecretKeyIsNotSet, InvalidSignature):
+                return self.abort()
+            return route(*args, **kwargs)
         return decorated_view_function
+
+    def abort(self):
+        abort(403)
 
     def _hmac_factory(self, data, digestmod=None):
         return hmac.new(self.hmac_key, data, digestmod=self.digestmod)
@@ -58,10 +62,13 @@ class Hmac(object):
         hmac_token_server = base64.urlsafe_b64encode(hmac_token_server)
         return hmac_token_server
 
-    def compare_hmacs(self, data, hmac_token_client):
-        hmac_token_server = self.make_hmac(data)
-        if six.b(hmac_token_client) != hmac_token_server:
-            raise ValueError('Signatures are different: {0} {1}'.format(
-                six.b(hmac_token_client), hmac_token_server
+    def validate_signature(self, request):
+        if self.hmac_disarm:
+            return True
+        hmac_token_client = self.get_signature(request)
+        hmac_token_server = self.make_hmac(request.data)
+        if hmac_token_client != hmac_token_server:
+            raise InvalidSignature('Signatures are different: {0} {1}'.format(
+                hmac_token_client, hmac_token_server
             ))
         return True
