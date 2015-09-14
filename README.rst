@@ -88,6 +88,13 @@ For HMAC auth of all views you can use ``Flask``'s ``before_request``:
             return abort(400)
 
 
+Generate signature for/from another application:
+
+.. sourcecode:: python
+
+    sig = make_hmac(self, data, key=another_app_key)
+
+
 .. |circle| image:: https://img.shields.io/circleci/project/thisissoon/flask-hmac.svg
     :target: https://circleci.com/gh/thisissoon/flask-hmac
 

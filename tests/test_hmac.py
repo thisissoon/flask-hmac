@@ -42,6 +42,10 @@ class TestHmacSignature(unittest.TestCase):
     def test_signature_shouldnt_be_empty(self):
         assert hmac.make_hmac()
 
+    def test_replace_secret_key(self):
+        assert hmac.make_hmac(key='a') == hmac.make_hmac(key='a')
+        assert hmac.make_hmac(key='a') != hmac.make_hmac(key='b')
+
 
 class TestDisabledHmacSignatureViews(unittest.TestCase):
 
