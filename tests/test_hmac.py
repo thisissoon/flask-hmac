@@ -3,10 +3,11 @@ import json
 import unittest
 
 # Third Party Libs
-from flask import Flask
+from flask import Flask, abort, request
 
 # First Party Libs
 from flask_hmac import Hmac
+from flask_hmac.exceptions import HmacException
 
 
 hmac = Hmac()
@@ -40,6 +41,10 @@ class TestHmacSignature(unittest.TestCase):
 
     def test_signature_shouldnt_be_empty(self):
         assert hmac.make_hmac()
+
+    def test_replace_secret_key(self):
+        assert hmac.make_hmac(key='a') == hmac.make_hmac(key='a')
+        assert hmac.make_hmac(key='a') != hmac.make_hmac(key='b')
 
 
 class TestDisabledHmacSignatureViews(unittest.TestCase):
@@ -110,3 +115,28 @@ class TestHmacSignatureViews(unittest.TestCase):
             headers={hmac.header: sig}
         )
         assert 403 == response.status_code
+
+
+class TestHmacSignatureFlaskDecorators(unittest.TestCase):
+
+    def test_signature_hook(self):
+        app = Flask(__name__)
+        app.config['TESTING'] = True
+        app.config['HMAC_KEY'] = 's3cr3tk3y'
+        hmac = Hmac(app)
+
+        @app.route('/autodecorated')
+        def autodecorated():
+            return 'autodecorated'
+
+        @app.before_request
+        def before_request():
+            try:
+                hmac.validate_signature(request)
+            except HmacException:
+                return abort(400)
+
+        app = app.test_client()
+
+        response = app.get('/autodecorated')
+        assert 400 == response.status_code
