@@ -86,7 +86,7 @@ class Hmac(object):
 
     def make_hmac(self, data='', key=None):
         hmac_token_server = self._hmac_factory(encode_string(data), key).digest()
-        hmac_token_server = base64.urlsafe_b64encode(hmac_token_server)
+        hmac_token_server = base64.b64encode(hmac_token_server)
         return hmac_token_server
 
     def make_hmac_for(self, name, data=''):
@@ -100,7 +100,7 @@ class Hmac(object):
         except KeyError as ex:
             raise UnknownKeyName(ex)
         valuekey = '{0}:{1}'.format(name, decode_string(self.make_hmac(data, key)))
-        token = base64.urlsafe_b64encode(six.b(valuekey))
+        token = base64.b64encode(six.b(valuekey))
         return token
 
     def validate_signature(self, request):
