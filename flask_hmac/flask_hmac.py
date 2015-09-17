@@ -99,9 +99,8 @@ class Hmac(object):
             key = self.hmac_keys[name]
         except KeyError as ex:
             raise UnknownKeyName(ex)
-        token = base64.urlsafe_b64encode(
-            six.b('{0}:{1}'.format(name, decode_string(self.make_hmac(data, key))))
-        )
+        valuekey = '{0}:{1}'.format(name, decode_string(self.make_hmac(data, key)))
+        token = base64.urlsafe_b64encode(six.b(valuekey))
         return token
 
     def validate_signature(self, request):
@@ -125,11 +124,12 @@ class Hmac(object):
 
     def _parse_multiple_signature(self, signature):
         try:
-            return decode_string(base64.urlsafe_b64decode(encode_string(signature))).split(':')
+            valuekey = base64.urlsafe_b64decode(encode_string(signature))
+            return decode_string(valuekey).split(':')
         except (TypeError, binascii.Error):
             raise InvalidSignature()
 
-    def validate_client_signature(self, request):
+    def validate_service_signature(self, request):
         if self.hmac_disarm:
             return True
         signature = self.get_signature(request)

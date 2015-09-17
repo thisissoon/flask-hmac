@@ -1,6 +1,10 @@
 Change Log
 ----------
 
+1.1.1
+~~~~~
+- Support multiple keys
+
 0.1.1
 ~~~~~~~~~
 - Able to change secret key in `make_hmac` method

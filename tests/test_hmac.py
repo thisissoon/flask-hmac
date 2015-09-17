@@ -168,7 +168,7 @@ class TestHmacSignatureFlaskBeforeQuestClientSecrets(unittest.TestCase):
         @app.before_request
         def before_request():
             try:
-                self.hmac.validate_client_signature(request)
+                self.hmac.validate_service_signature(request)
             except HmacException:
                 return abort(400)
 

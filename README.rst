@@ -46,6 +46,28 @@ Client
     )
 
 
+You can also use multiple keys between different applications. Secret keys are
+stored in ``HMAC_KEYS`` in the app settings as a dictionary:
+
+.. sourcecode:: python
+
+    app.config['HMAC_KEYS'] = {
+        'userservice': 'userservice key',
+        'pingpongservice': 'ping pong key'
+    }
+
+
+Then the secret key has to generated with `make_hmac_for` method.
+
+.. sourcecode:: python
+
+    hmac.make_hmac_for('userservice', request_data)  # data is optional
+
+    # signature validation for multiple keys
+
+    hmac.validate_service_signature(request)
+
+
 **Call with payload**
 
 Request payload has to be used as a data for HMAC generation.
