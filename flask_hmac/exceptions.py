@@ -9,3 +9,7 @@ class SecretKeyIsNotSet(HmacException):
 
 class InvalidSignature(HmacException):
     pass
+
+
+class UnknownKeyName(HmacException):
+    pass
