@@ -31,9 +31,11 @@ Server
     def hmac_auth_view():
         return "hmac_auth_view"
 
+Client
+~~~~~~
 
-Call without payload
-~~~~~~~~~~~~~~~~~~~~
+**Call without payload**
+
 
 .. sourcecode:: python
 
@@ -44,8 +46,29 @@ Call without payload
     )
 
 
-Call with payload
-~~~~~~~~~~~~~~~~~
+You can also use multiple keys between different applications. Secret keys are
+stored in ``HMAC_KEYS`` in the app settings as a dictionary:
+
+.. sourcecode:: python
+
+    app.config['HMAC_KEYS'] = {
+        'userservice': 'userservice key',
+        'pingpongservice': 'ping pong key'
+    }
+
+
+Then the secret key has to generated with `make_hmac_for` method.
+
+.. sourcecode:: python
+
+    hmac.make_hmac_for('userservice', request_data)  # data is optional
+
+    # signature validation for multiple keys
+
+    hmac.validate_service_signature(request)
+
+
+**Call with payload**
 
 Request payload has to be used as a data for HMAC generation.
 
@@ -59,6 +82,39 @@ Request payload has to be used as a data for HMAC generation.
         data=data,
         headers={hmac.header: sig}
     )
+
+
+----
+
+You can define custom errors overwriting ``abort`` method:
+
+.. sourcecode:: python
+
+    class MyHmac(Hmac):
+
+        def abort(self):
+            message = {'status': '403', 'message': 'not authorized'}
+            response = jsonify(message)
+            response.status_code = 403
+            return response
+
+For HMAC auth of all views you can use ``Flask``'s ``before_request``:
+
+.. sourcecode:: python
+
+    @app.before_request
+    def before_request():
+        try:
+            hmac.validate_signature(request)
+        except HmacException:
+            return abort(400)
+
+
+Generate signature for/from another application:
+
+.. sourcecode:: python
+
+    sig = make_hmac(self, data, key=another_app_key)
 
 
 .. |circle| image:: https://img.shields.io/circleci/project/thisissoon/flask-hmac.svg
