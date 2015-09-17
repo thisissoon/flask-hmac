@@ -1,6 +1,10 @@
 Change Log
 ----------
 
+1.1.2
+~~~~~
+- Swaps `urlsafe_b64encode` for `b64encode`
+
 1.1.1
 ~~~~~
 - Support multiple keys
