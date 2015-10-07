@@ -17,6 +17,10 @@ def create_app(disable_hmac=None):
     app = Flask(__name__)
     app.config['TESTING'] = True
     app.config['HMAC_KEY'] = 's3cr3tk3y'
+    app.config['HMAC_KEYS'] = {
+        'a': 'f00',
+        'b': 'b4r',
+    }
     if disable_hmac:
         app.config['HMAC_DISARM'] = disable_hmac
     hmac.init_app(app)
@@ -26,8 +30,13 @@ def create_app(disable_hmac=None):
         return 'no_auth_view'
 
     @app.route('/hmac_auth_view', methods=['GET', 'POST'])
-    @hmac.auth
+    @hmac.auth()
     def hmac_auth_view():
+        return 'hmac_auth_view'
+
+    @app.route('/only_view', methods=['GET', 'POST'])
+    @hmac.auth(only=["b"])
+    def only_view():
         return 'hmac_auth_view'
 
     return app
@@ -124,6 +133,29 @@ class TestHmacSignatureViews(unittest.TestCase):
         )
         assert 403 == response.status_code
 
+    def test_only_allow_certain_clients(self):
+        data = json.dumps({'foo': 'bar'})
+
+        sig = hmac.make_hmac_for('a', data=data)
+        response = self.app.post(
+            '/only_view',
+            data=data,
+            headers={hmac.header: sig}
+        )
+
+        # a client should not be allowed access
+        assert 403 == response.status_code
+
+        sig = hmac.make_hmac_for('b', data=data)
+        response = self.app.post(
+            '/only_view',
+            data=data,
+            headers={hmac.header: sig}
+        )
+
+        # b client should be allowed access
+        assert 200 == response.status_code
+
 
 class TestHmacSignatureFlaskBeforeQuest(unittest.TestCase):
 
@@ -168,7 +200,7 @@ class TestHmacSignatureFlaskBeforeQuestClientSecrets(unittest.TestCase):
         @app.before_request
         def before_request():
             try:
-                self.hmac.validate_service_signature(request)
+                self.hmac.validate_signature(request)
             except HmacException:
                 return abort(400)
 

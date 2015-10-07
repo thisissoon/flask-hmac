@@ -54,28 +54,43 @@ class Hmac(object):
             raise SecretKeyIsNotSet()
 
     def init_app(self, app):
-        self.hmac_key = app.config.get('HMAC_KEY', '')
-        self.hmac_keys = app.config.get('HMAC_KEYS', {})
+        self.hmac_key = app.config.get('HMAC_KEY', None)
+        self.hmac_keys = app.config.get('HMAC_KEYS', None)
         self.hmac_disarm = app.config.get('HMAC_DISARM', False)
 
-    def auth(self, route):
-        ''' Route decorator
+    def auth(self, only=None):
+        ''' Route decorator. Validates an incoming request can access the
+        route function.
+
+        Keyword Args:
+            only (list): Optional list of clients that can access the view
 
         .. sourcecode:: python
 
             @app.route("/hmac_auth_view")
-            @hmac.auth  # decorate view
+            @hmac.auth() # decorate view
             def hmac_auth_view():
                 return "hmac_auth_view"
+
+        .. sourcecode:: python
+
+            @app.route("/hmac_auth_view")
+            @hmac.auth(only=["foo"])  # decorate view
+            def hmac_auth_view():
+                return "hmac_auth_view"
+
         '''
-        @wraps(route)
-        def decorated_view_function(*args, **kwargs):
-            try:
-                self.validate_signature(request)
-            except (SecretKeyIsNotSet, InvalidSignature):
-                return self.abort()
-            return route(*args, **kwargs)
-        return decorated_view_function
+
+        def real_decorator(route):
+            @wraps(route)
+            def decorated_view_function(*args, **kwargs):
+                try:
+                    self.validate_signature(request, only=only)
+                except (SecretKeyIsNotSet, InvalidSignature):
+                    return self.abort()
+                return route(*args, **kwargs)
+            return decorated_view_function
+        return real_decorator
 
     def abort(self):
         abort(403)
@@ -103,25 +118,6 @@ class Hmac(object):
         token = base64.b64encode(six.b(valuekey))
         return token
 
-    def validate_signature(self, request):
-        ''' Generates HMAC key
-
-        Arguments:
-            request (Request): flask request
-
-        Raise:
-            InvalidSignature: when signatures don't match
-        '''
-        if self.hmac_disarm:
-            return True
-        hmac_token_client = self.get_signature(request)
-        hmac_token_server = self.make_hmac(request.data)
-        if hmac_token_client != hmac_token_server:
-            raise InvalidSignature('Signatures are different: {0} {1}'.format(
-                hmac_token_client, hmac_token_server
-            ))
-        return True
-
     def _parse_multiple_signature(self, signature):
         try:
             valuekey = base64.urlsafe_b64decode(encode_string(signature))
@@ -129,15 +125,43 @@ class Hmac(object):
         except (TypeError, binascii.Error):
             raise InvalidSignature()
 
-    def validate_service_signature(self, request):
-        if self.hmac_disarm:
-            return True
-        signature = self.get_signature(request)
-        key_name, hmac_token_client = self._parse_multiple_signature(signature)
+    def validate_signature(self, request, only=None):
+        '''Validates a requests HMAC Signature against one generated server side
+        from the same client secret key.
 
-        hmac_token_server = self.make_hmac_for(key_name, request.data)
-        if signature != hmac_token_server:
-            raise InvalidSignature('Signatures are different: {0} {1}'.format(
-                signature, hmac_token_server
-            ))
-        return True
+        Arguments:
+            request (Request): flask request
+
+        Raise:
+            InvalidSignature: when signatures don't match
+        '''
+
+        if self.hmac_disarm:
+            return
+
+        signature = self.get_signature(request)
+        hmac_server_tokens = []
+
+        if self.hmac_key is not None:
+            token = self.make_hmac(request.data)
+            hmac_server_tokens.append(token)
+
+        if self.hmac_keys is not None:
+            try:
+                client, sig = self._parse_multiple_signature(signature)
+                if only is not None:
+                    if client in only:
+                        token = self.make_hmac_for(client, request.data)
+                        hmac_server_tokens.append(token)
+                else:
+                    token = self.make_hmac_for(client, request.data)
+                    hmac_server_tokens.append(token)
+            except ValueError:
+                # We fall here if the signature does is not vlaid on it's own
+                # and does not contain a client id - we don't care since the
+                # token will not be added to the list of keys to validate the
+                # signature against
+                pass
+
+        if signature not in hmac_server_tokens:
+            raise InvalidSignature
