@@ -27,9 +27,15 @@ Server
 
 
     @app.route("/hmac_auth_view")
-    @hmac.auth  # decorate view
+    @hmac.auth()  # decorate view
     def hmac_auth_view():
         return "hmac_auth_view"
+
+    @app.route("/hmac_auth_view")
+    @hmac.auth(only=["foo"])  # decorate view, only allows foo client access
+    def hmac_auth_view():
+        return "hmac_auth_view"
+
 
 Client
 ~~~~~~
@@ -52,8 +58,8 @@ stored in ``HMAC_KEYS`` in the app settings as a dictionary:
 .. sourcecode:: python
 
     app.config['HMAC_KEYS'] = {
-        'userservice': 'userservice key',
-        'pingpongservice': 'ping pong key'
+        'aservice': 'akey',
+        'bservice': 'bkey'
     }
 
 
@@ -61,7 +67,7 @@ Then the secret key has to generated with `make_hmac_for` method.
 
 .. sourcecode:: python
 
-    hmac.make_hmac_for('userservice', request_data)  # data is optional
+    hmac.make_hmac_for('aservice', request_data)  # data is optional
 
     # signature validation for multiple keys
 
