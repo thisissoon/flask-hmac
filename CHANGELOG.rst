@@ -1,6 +1,11 @@
 Change Log
 ----------
 
+1.2
+~~~~~
+- BREAKING CHANGE: `@hmac.auth` decorator now needs to be called as `@hmac.auth()`
+- New `only` argument for `@hmac.auth()` to only allow specific clients access
+
 1.1.2
 ~~~~~
 - Swaps `urlsafe_b64encode` for `b64encode`
