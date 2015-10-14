@@ -57,6 +57,7 @@ class Hmac(object):
         self.hmac_key = app.config.get('HMAC_KEY', None)
         self.hmac_keys = app.config.get('HMAC_KEYS', None)
         self.hmac_disarm = app.config.get('HMAC_DISARM', False)
+        self.hmac_error_code = app.config.get('HMAC_ERROR_CODE', six.moves.http_client.FORBIDDEN)
 
     def auth(self, only=None):
         ''' Route decorator. Validates an incoming request can access the
@@ -93,7 +94,7 @@ class Hmac(object):
         return real_decorator
 
     def abort(self):
-        abort(403)
+        abort(self.hmac_error_code)
 
     def _hmac_factory(self, data, key=None):
         key = key if key else self.hmac_key
