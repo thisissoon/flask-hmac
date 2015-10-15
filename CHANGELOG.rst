@@ -1,6 +1,10 @@
 Change Log
 ----------
 
+1.2.1
+~~~~~
+- New `HMAC_ERROR_CODE` configuration option to allow different HTTP Status code responses on failure
+
 1.2
 ~~~~~
 - BREAKING CHANGE: `@hmac.auth` decorator now needs to be called as `@hmac.auth()`
