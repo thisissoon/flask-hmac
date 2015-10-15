@@ -94,6 +94,13 @@ class TestHmacSignatureViews(unittest.TestCase):
         app.config['HMAC_KEYS'] = {'a': 'aa', 'b': 'bb'}
         hmac.init_app(app)
 
+    def test_configurable_status_code(self):
+        app = create_app()
+        app.config['HMAC_ERROR_CODE'] = 400
+        hmac.init_app(app)
+        response = app.test_client().get('/hmac_auth_view')
+        assert 400 == response.status_code
+
     def test_no_auth_view_should_be_ok(self):
         response = self.app.get('/no_auth_view')
         assert 200 == response.status_code
